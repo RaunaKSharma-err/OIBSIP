@@ -1,0 +1,47 @@
+# ==========================================
+# Client Side (React, Vue, Next.js, Vite, etc.)
+# ==========================================
+# Dependencies
+client/node_modules/
+client/.pnp
+client/.pnp.js
+
+# Production builds
+client/dist/
+client/build/
+client/.next/
+client/out/
+
+# Local env files & debug logs
+client/.env*.local
+client/*.log
+client/.eslintcache
+
+# ==========================================
+# Server Side (Node.js, Express, etc.)
+# ==========================================
+# Dependencies
+server/node_modules/
+
+# Environment variables (Crucial for security)
+server/.env
+server/.env.local
+server/.env.production
+
+# Logs and runtime data
+server/logs/
+server/*.log
+server/npm-debug.log*
+
+# Build outputs (if using TypeScript/Babel)
+server/dist/
+server/build/
+
+# ==========================================
+# System Files (General)
+# ==========================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.kilo/
