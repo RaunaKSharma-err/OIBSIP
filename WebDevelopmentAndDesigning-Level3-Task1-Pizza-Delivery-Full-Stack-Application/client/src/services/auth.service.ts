@@ -29,7 +29,7 @@ async function mockLogin(data: LoginRequest): Promise<LoginResponse> {
     isEmailVerified: true,
     createdAt: new Date().toISOString(),
   };
-  return { user, token: `mock-token-${user.id}` };
+  return { user, accessToken: `mock-token-${user.id}` };
 }
 
 async function mockRegister(data: RegisterRequest): Promise<RegisterResponse> {
@@ -52,14 +52,24 @@ async function mockRegister(data: RegisterRequest): Promise<RegisterResponse> {
 export const authService = {
   async login(data: LoginRequest): Promise<LoginResponse> {
     if (config.useMock) return mockLogin(data);
-    return apiClient.post<LoginResponse>('/auth/login', data, {
+    const res = await apiClient.post<{ success: boolean; data: LoginResponse }>('/auth/login', data, {
       credentials: 'include',
     });
+    return res.data;
   },
 
   async register(data: RegisterRequest): Promise<RegisterResponse> {
     if (config.useMock) return mockRegister(data);
-    return apiClient.post<RegisterResponse>('/auth/register', data);
+    const res = await apiClient.post<{ success: boolean; data: RegisterResponse }>('/auth/register', data);
+    return res.data;
+  },
+
+  async resendVerification(data: { email: string }): Promise<{ message: string }> {
+    if (config.useMock) {
+      await delay(MOCK_DELAY);
+      return { message: 'Verification email resent.' };
+    }
+    return apiClient.post<{ message: string }>('/auth/resend-verification', data);
   },
 
   async verifyEmail(data: VerifyEmailRequest): Promise<{ message: string }> {
@@ -67,7 +77,8 @@ export const authService = {
       await delay(MOCK_DELAY);
       return { message: 'Email verified successfully.' };
     }
-    return apiClient.post<{ message: string }>('/auth/verify-email', data);
+    const res = await apiClient.post<{ success: boolean; data: { message: string } }>('/auth/verify-email', data);
+    return res.data;
   },
 
   async forgotPassword(
@@ -98,7 +109,8 @@ export const authService = {
       await delay(MOCK_DELAY);
       return useAuthStore.getState().user as User;
     }
-    return apiClient.get<User>('/auth/me');
+    const res = await apiClient.get<{ success: boolean; data: { user: User } }>('/auth/me');
+    return res.data.user;
   },
 
   async logout(): Promise<void> {

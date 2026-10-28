@@ -40,7 +40,7 @@ export function PizzaDetailsPage() {
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    if (pizza && !sizeId) setSizeId(pizza.sizes[0]?.id || '');
+    if (pizza && !sizeId) setSizeId(pizza.sizes?.[0]?.id || '');
   }, [pizza, sizeId]);
 
   useEffect(() => {
@@ -51,13 +51,13 @@ export function PizzaDetailsPage() {
 
   const unitPrice = useMemo(() => {
     if (!pizza || !options) return 0;
-    const size = pizza.sizes.find((s) => s.id === sizeId);
+    const size = pizza.sizes?.find((s) => s.id === sizeId);
     const multiplier = size?.priceMultiplier || 1;
-    const base = options.bases.find((b) => b.id === baseId);
-    const sauce = options.sauces.find((s) => s.id === sauceId);
-    const cheese = options.cheeses.find((c) => c.id === cheeseId);
+    const base = options.bases?.find((b) => b.id === baseId);
+    const sauce = options.sauces?.find((s) => s.id === sauceId);
+    const cheese = options.cheeses?.find((c) => c.id === cheeseId);
     const toppingsTotal = toppingIds.reduce((sum, tid) => {
-      const t = options.toppings.find((tp) => tp.id === tid);
+      const t = options.toppings?.find((tp) => tp.id === tid);
       return sum + (t?.price || 0);
     }, 0);
     return Math.round(
@@ -77,12 +77,12 @@ export function PizzaDetailsPage() {
 
   const handleAddToCart = () => {
     if (!pizza || !options) return;
-    const size = pizza.sizes.find((s) => s.id === sizeId);
-    const base = options.bases.find((b) => b.id === baseId);
-    const sauce = options.sauces.find((s) => s.id === sauceId);
-    const cheese = options.cheeses.find((c) => c.id === cheeseId);
+    const size = pizza.sizes?.find((s) => s.id === sizeId);
+    const base = options.bases?.find((b) => b.id === baseId);
+    const sauce = options.sauces?.find((s) => s.id === sauceId);
+    const cheese = options.cheeses?.find((c) => c.id === cheeseId);
     const selectedToppings: CartItemTopping[] = toppingIds
-      .map((tid) => options.toppings.find((t) => t.id === tid))
+      .map((tid) => options.toppings?.find((t) => t.id === tid))
       .filter(Boolean)
       .map((t) => ({ id: t!.id, name: t!.name, price: t!.price }));
 
@@ -170,7 +170,7 @@ export function PizzaDetailsPage() {
               <Label className="mb-2.5 block text-sm font-semibold">Size</Label>
               <RadioGroup value={sizeId} onValueChange={setSizeId}>
                 <div className="grid grid-cols-3 gap-2">
-                  {pizza.sizes.map((size) => (
+                  {(pizza.sizes ?? []).map((size) => (
                     <Label
                       key={size.id}
                       htmlFor={size.id}
@@ -192,7 +192,7 @@ export function PizzaDetailsPage() {
               <Label className="mb-2.5 block text-sm font-semibold">Pizza Base</Label>
               <RadioGroup value={baseId} onValueChange={setBaseId}>
                 <div className="space-y-2">
-                  {options.bases.map((base) => (
+                  {(options.bases ?? []).map((base) => (
                     <Label
                       key={base.id}
                       htmlFor={base.id}
@@ -219,7 +219,7 @@ export function PizzaDetailsPage() {
               <Label className="mb-2.5 block text-sm font-semibold">Sauce</Label>
               <RadioGroup value={sauceId} onValueChange={setSauceId}>
                 <div className="space-y-2">
-                  {options.sauces.map((sauce) => (
+                  {(options.sauces ?? []).map((sauce) => (
                     <Label
                       key={sauce.id}
                       htmlFor={sauce.id}
@@ -244,7 +244,7 @@ export function PizzaDetailsPage() {
               <Label className="mb-2.5 block text-sm font-semibold">Cheese</Label>
               <RadioGroup value={cheeseId} onValueChange={setCheeseId}>
                 <div className="space-y-2">
-                  {options.cheeses.map((cheese) => (
+                  {(options.cheeses ?? []).map((cheese) => (
                     <Label
                       key={cheese.id}
                       htmlFor={cheese.id}
@@ -268,7 +268,7 @@ export function PizzaDetailsPage() {
             <div>
               <Label className="mb-2.5 block text-sm font-semibold">Toppings (optional)</Label>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {options.toppings.map((topping) => (
+                {(options.toppings ?? []).map((topping) => (
                   <Label
                     key={topping.id}
                     htmlFor={topping.id}

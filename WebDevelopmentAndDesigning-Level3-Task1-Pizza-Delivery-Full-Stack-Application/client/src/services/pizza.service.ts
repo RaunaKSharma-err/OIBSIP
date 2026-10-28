@@ -86,8 +86,8 @@ export const pizzaService = {
       await delay(MOCK_DELAY);
       return mockPizzas.filter((p) => p.isPopular).slice(0, 4);
     }
-    return apiClient.get<Pizza[]>('/pizzas/featured');
-  },
+    const res = await apiClient.get<PaginatedResponse<Pizza>>('/pizzas', { params: { limit: 4 } });
+    return res.data;  },
 
   async getCustomizationOptions(): Promise<CustomizationOptions> {
     if (config.useMock) {

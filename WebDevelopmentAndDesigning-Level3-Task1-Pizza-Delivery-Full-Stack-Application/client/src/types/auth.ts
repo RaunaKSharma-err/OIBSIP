@@ -23,7 +23,9 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   user: User;
-  token: string;
+  accessToken: string;
+  token?: string;
+  expiresIn?: string;
 }
 
 export interface RegisterRequest {

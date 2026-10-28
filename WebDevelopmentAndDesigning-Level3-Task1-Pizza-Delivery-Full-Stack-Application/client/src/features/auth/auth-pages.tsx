@@ -53,8 +53,8 @@ export function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setLoading(true);
     try {
-      const res = await authService.login(data);
-      setSession(res.user, res.token);
+      const res = await authService.login({ email: data.email, password: data.password });
+      setSession(res.user, res.accessToken);
       toast.success('Welcome back!');
       navigate(res.user.role === 'admin' ? '/admin/dashboard' : '/');
     } catch (e) {
@@ -116,7 +116,6 @@ export function RegisterPage() {
     setLoading(true);
     try {
       const res = await authService.register({ name: data.name, email: data.email, password: data.password });
-      setSession(res.user, res.token);
       toast.success(res.message || 'Registration successful');
       navigate('/verify-email');
     } catch (e) {
@@ -169,12 +168,16 @@ export function RegisterPage() {
 export function VerifyEmailPage() {
   const [loading, setLoading] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [manualToken, setManualToken] = useState('');
+  const [email, setEmail] = useState('');
   const user = useAuthStore((s) => s.user);
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token') || manualToken;
 
   const handleResend = async () => {
     setLoading(true);
     try {
-      await authService.verifyEmail({ token: 'resend' });
+      await authService.resendVerification({ email: email || user?.email || '' });
       toast.success('Verification email resent');
     } catch {
       toast.error('Failed to resend verification');
@@ -184,9 +187,13 @@ export function VerifyEmailPage() {
   };
 
   const handleVerify = async () => {
+    if (!token) {
+      toast.error('Missing verification token');
+      return;
+    }
     setLoading(true);
     try {
-      await authService.verifyEmail({ token: 'mock-verify' });
+      await authService.verifyEmail({ token });
       setVerified(true);
       toast.success('Email verified successfully');
     } catch {
@@ -213,6 +220,18 @@ export function VerifyEmailPage() {
               We sent a verification link to <span className="font-medium text-foreground">{user?.email || 'your email'}</span>.
               Click the link to verify your account.
             </p>
+            <Input
+              placeholder="Your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full"
+            />
+            <Input
+              placeholder="Paste verification token"
+              value={manualToken}
+              onChange={(e) => setManualToken(e.target.value)}
+              className="w-full"
+            />
             <Button onClick={handleVerify} className="w-full" disabled={loading}>
               {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> : 'Verify Now (Demo)'}
             </Button>
@@ -344,12 +363,12 @@ export function AdminLoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setLoading(true);
     try {
-      const res = await authService.login(data);
+      const res = await authService.login({ email: data.email, password: data.password });
       if (res.user.role !== 'admin') {
         toast.error('Access denied — admin account required');
         return;
       }
-      setSession(res.user, res.token);
+      setSession(res.user, res.accessToken);
       toast.success('Welcome, Admin');
       navigate('/admin/dashboard');
     } catch (e) {

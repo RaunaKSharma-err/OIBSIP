@@ -43,6 +43,32 @@ export const adminService = {
         ],
       };
     }
-    return apiClient.get<DashboardData>('/admin/dashboard');
+    const res = await apiClient.get<{ success: boolean; data: any }>('/admin/dashboard');
+    const d = res.data;
+    return {
+      stats: {
+        totalOrders: d.orders?.total ?? 0,
+        pendingOrders: d.orders?.awaitingProcessing ?? 0,
+        preparingOrders: d.orders?.inKitchen ?? 0,
+        outForDelivery: d.orders?.inDelivery ?? 0,
+        lowStockCount: d.inventory?.lowStockCount ?? 0,
+        revenue: d.revenue?.todayAmount ?? 0,
+      },
+      orderStatusDistribution: [
+        { status: 'received', count: d.orders?.awaitingProcessing ?? 0 },
+        { status: 'kitchen', count: d.orders?.inKitchen ?? 0 },
+        { status: 'delivery', count: d.orders?.inDelivery ?? 0 },
+        { status: 'delivered', count: d.orders?.delivered ?? 0 },
+        { status: 'cancelled', count: d.orders?.cancelledPaid ?? 0 },
+      ],
+      recentOrders: [],
+      lowStockItems: (d.inventory?.lowStockItems || []).map((i: any) => ({
+        id: i.id,
+        name: i.name,
+        quantity: i.stock,
+        lowStockThreshold: i.lowStockThreshold,
+        unit: i.unit,
+      })),
+    };
   },
 };

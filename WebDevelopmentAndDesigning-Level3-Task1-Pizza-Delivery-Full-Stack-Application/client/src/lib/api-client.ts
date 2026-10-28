@@ -98,13 +98,13 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
     if (!response.ok) {
       const message =
-        (isJson && data?.message) ||
+        (isJson && (data?.error?.message || data?.message)) ||
         `Request failed with status ${response.status}`;
       throw new ApiError(
         message,
         response.status,
-        isJson ? data?.code : undefined,
-        isJson ? data?.errors : undefined
+        isJson ? data?.error?.code : undefined,
+        isJson ? data?.error?.details ?? data?.errors : undefined
       );
     }
 
