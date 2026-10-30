@@ -6,7 +6,7 @@ export function formatCurrency(amount: number): string {
     currency: 'INR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
-  }).format(amount);
+  }).format(amount / 100);
 }
 
 export function formatRelativeTime(date: string | Date): string {

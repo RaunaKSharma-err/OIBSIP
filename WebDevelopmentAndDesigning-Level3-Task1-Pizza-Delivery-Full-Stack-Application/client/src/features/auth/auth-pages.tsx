@@ -117,7 +117,7 @@ export function RegisterPage() {
     try {
       const res = await authService.register({ name: data.name, email: data.email, password: data.password });
       toast.success(res.message || 'Registration successful');
-      navigate('/verify-email');
+      navigate('/login');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Registration failed');
     } finally {

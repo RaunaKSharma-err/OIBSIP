@@ -119,7 +119,7 @@ async function main() {
           description: p.description,
           category: p.category,
           basePrice: p.basePrice,
-          imageUrl: `/images/pizzas/${p.slug}.jpg`,
+          imageUrl: `/images/pizzas/${p.slug}.svg`,
           options: { bases: opt(BASES), sauces: opt(SAUCES), cheeses: opt(p.cheeses), toppings: opt(p.toppings) },
           recipe: [...p.recipe, ['Pizza box', 1] as [string, number]].map(([n, quantity]) => ({ item: inv(n), quantity })),
         },

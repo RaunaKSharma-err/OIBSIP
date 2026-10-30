@@ -90,7 +90,7 @@ function mapPizza(p: any): Pizza {
     id: p.id,
     name: p.name,
     description: p.description || '',
-    image: p.imageUrl || '',
+    image: p.imageUrl || 'https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg',
     category: mapCategory(p.category),
     basePrice: p.basePrice,
     isAvailable: p.available !== false,

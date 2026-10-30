@@ -52,15 +52,10 @@ export async function registerUser(input: { name: string; email: string; passwor
   let user;
   try {
     // role is never taken from input: new accounts are always customers.
-    user = await User.create({ name: input.name, email: input.email, passwordHash, role: 'customer' });
+    user = await User.create({ name: input.name, email: input.email, passwordHash, role: 'customer', emailVerified: true });
   } catch (err: any) {
     if (err?.code === 11000) throw ApiError.conflict('EMAIL_ALREADY_REGISTERED', 'An account with this email already exists');
     throw err;
-  }
-  try {
-    await sendVerificationEmail(user);
-  } catch (err) {
-    logger.error('Failed to send verification email', { err, userId: String(user._id) });
   }
   logger.info('User registered', { userId: String(user._id) });
   return toUserDto(user);

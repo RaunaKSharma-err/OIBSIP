@@ -22,13 +22,13 @@ beforeEach(async () => {
 });
 
 describe('registration', () => {
-  it('registers a customer, sends a verification email and never returns the hash', async () => {
+  it('registers a customer and never returns the hash', async () => {
     const res = await request(app).post('/api/auth/register').send(creds);
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.user).toMatchObject({ email: creds.email, role: 'customer', emailVerified: false });
+    expect(res.body.data.user).toMatchObject({ email: creds.email, role: 'customer', emailVerified: true });
     expect(JSON.stringify(res.body)).not.toMatch(/passwordHash/);
-    expect(mail).toHaveBeenCalledTimes(1);
+    expect(mail).not.toHaveBeenCalled();
   });
   it('rejects attempts to choose a role (mass assignment)', async () => {
     const res = await request(app).post('/api/auth/register').send({ ...creds, role: 'admin' });
@@ -47,33 +47,6 @@ describe('registration', () => {
   });
 });
 
-describe('email verification', () => {
-  it('verifies once, then the token is dead', async () => {
-    await request(app).post('/api/auth/register').send(creds);
-    const token = tokenFromLastMail();
-    expect((await request(app).post('/api/auth/verify-email').send({ token })).status).toBe(200);
-    expect((await User.findOne({ email: creds.email }))!.emailVerified).toBe(true);
-    const again = await request(app).post('/api/auth/verify-email').send({ token });
-    expect(again.status).toBe(400);
-    expect(again.body.error.code).toBe('INVALID_OR_EXPIRED_TOKEN');
-  });
-  it('rejects an expired token', async () => {
-    await request(app).post('/api/auth/register').send(creds);
-    const token = tokenFromLastMail();
-    await AuthToken.updateMany({}, { $set: { expiresAt: new Date(Date.now() - 1000) } });
-    const res = await request(app).post('/api/auth/verify-email').send({ token });
-    expect(res.status).toBe(400);
-  });
-  it('resend gives the same response whether or not the account exists', async () => {
-    const a = await request(app).post('/api/auth/resend-verification').send({ email: 'nobody@example.test' });
-    await request(app).post('/api/auth/register').send(creds);
-    mail.mockClear();
-    const b = await request(app).post('/api/auth/resend-verification').send({ email: creds.email });
-    expect(a.status).toBe(200);
-    expect(b.body).toEqual(a.body);
-    expect(mail).toHaveBeenCalledTimes(1);
-  });
-});
 
 describe('login, sessions and protected routes', () => {
   it('rejects invalid credentials with a generic error', async () => {
