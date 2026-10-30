@@ -10,7 +10,8 @@ import { orderService } from '@/services/order.service';
 import { formatCurrency, formatDateTime, formatRelativeTime } from '@/lib/format';
 import type { OrderStatus, PaymentStatus } from '@/types';
 
-const statusConfig: Record<OrderStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+  pending_payment: { label: 'Pending Payment', variant: 'secondary' },
   received: { label: 'Received', variant: 'secondary' },
   kitchen: { label: 'In Kitchen', variant: 'default' },
   delivery: { label: 'Out for Delivery', variant: 'default' },
@@ -213,10 +214,10 @@ export function OrderDetailsPage() {
       <Card>
         <CardHeader><CardTitle className="text-lg">Delivery Information</CardTitle></CardHeader>
         <CardContent className="space-y-2 text-sm">
-          <p className="font-medium">{order.deliveryInfo.name}</p>
-          <p className="flex items-start gap-2 text-muted-foreground"><MapPin className="h-4 w-4 shrink-0 mt-0.5" /> {order.deliveryInfo.address}, {order.deliveryInfo.city}</p>
-          <p className="text-muted-foreground">Phone: {order.deliveryInfo.phone}</p>
-          {order.deliveryInfo.instructions && <p className="text-muted-foreground">Instructions: {order.deliveryInfo.instructions}</p>}
+          <p className="font-medium">{order.delivery?.fullName}</p>
+          <p className="flex items-start gap-2 text-muted-foreground"><MapPin className="h-4 w-4 shrink-0 mt-0.5" /> {order.delivery?.addressLine1}, {order.delivery?.city}</p>
+          <p className="text-muted-foreground">Phone: {order.delivery?.phone}</p>
+          {order.delivery?.instructions && <p className="text-muted-foreground">Instructions: {order.delivery.instructions}</p>}
         </CardContent>
       </Card>
     </div>

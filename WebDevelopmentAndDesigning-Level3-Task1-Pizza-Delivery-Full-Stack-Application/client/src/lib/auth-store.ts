@@ -54,6 +54,8 @@ export const useAuthStore = create<AuthState>()(
       onRehydrateStorage: () => (state) => {
         if (state?.token) {
           localStorage.setItem('auth_token', state.token);
+          state.isAuthenticated = true;
+          state.isAdmin = state.user?.role === 'admin';
         }
       },
     }

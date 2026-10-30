@@ -1,0 +1,17 @@
+User-agent: *
+Disallow: /admin
+Disallow: /cart
+Disallow: /checkout
+Disallow: /orders
+Disallow: /profile
+Disallow: /login
+Disallow: /register
+Disallow: /verify-email
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /payment
+Allow: /
+Allow: /menu
+Allow: /pizza/
+
+Sitemap: /sitemap.xml

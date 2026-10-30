@@ -5,6 +5,9 @@ import { ProtectedRoute, AdminRoute, PublicOnlyRoute } from './route-guards';
 import { NotFoundPage, UnauthorizedPage } from './error-pages';
 
 import { HomePage } from '@/features/menu/home-page';
+import { EsewaSuccessPage } from '@/features/esewa/EsewaSuccessPage';
+import { EsewaFailurePage } from '@/features/esewa/EsewaFailurePage';
+import { useAuthStore } from '@/lib/auth-store';
 import { MenuPage } from '@/features/menu/menu-page';
 import { PizzaDetailsPage } from '@/features/customization/pizza-details-page';
 import { CartPage } from '@/features/cart/cart-page';
@@ -27,6 +30,14 @@ import {
   AdminSettingsPage,
 } from '@/features/dashboard/admin-pages';
 
+function EsewaSuccessRoute() {
+  const token = useAuthStore((s) => s.token) || '';
+  return <EsewaSuccessPage token={token} />;
+}
+function EsewaFailureRoute() {
+  const token = useAuthStore((s) => s.token) || '';
+  return <EsewaFailurePage token={token} />;
+}
 const router = createBrowserRouter([
   {
     element: <CustomerLayout />,
@@ -34,6 +45,8 @@ const router = createBrowserRouter([
       { path: '/', element: <HomePage /> },
       { path: '/menu', element: <MenuPage /> },
       { path: '/pizza/:id', element: <PizzaDetailsPage /> },
+      { path: '/payment/esewa/success/:orderId', element: <EsewaSuccessRoute /> },
+      { path: '/payment/esewa/failure/:orderId', element: <EsewaFailureRoute /> },
       { path: '/cart', element: <CartPage /> },
       {
         element: <PublicOnlyRoute />,

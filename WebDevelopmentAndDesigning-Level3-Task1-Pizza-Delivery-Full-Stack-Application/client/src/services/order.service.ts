@@ -14,6 +14,38 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function mapOrder(o: any): Order {
+  return {
+    id: o.id,
+    orderNumber: o.orderNumber,
+    userId: o.userId || (o.customer?.id) || '',
+    items: (o.items || []).map((i: any) => ({
+      pizzaId: i.pizzaId || i.pizza || '',
+      pizzaName: i.pizzaName || '',
+      pizzaImage: i.pizzaImage || '',
+      quantity: i.quantity || 0,
+      unitPrice: i.unitPrice || 0,
+      totalPrice: i.totalPrice || i.lineTotal || 0,
+    })),
+    subtotal: o.subtotal || 0,
+    deliveryCharge: o.deliveryCharge ?? o.deliveryFee ?? 0,
+    discount: o.discount || 0,
+    total: o.total || 0,
+    paymentStatus: o.paymentStatus,
+    paymentMethod: o.paymentMethod || 'esewa',
+    orderStatus: o.orderStatus,
+    deliveryInfo: {
+      name: o.delivery?.fullName || o.deliveryInfo?.name || '',
+      phone: o.delivery?.phone || o.deliveryInfo?.phone || '',
+      address: o.delivery?.addressLine1 || o.deliveryInfo?.address || '',
+      city: o.delivery?.city || o.deliveryInfo?.city || '',
+      instructions: o.delivery?.instructions || o.deliveryInfo?.instructions,
+    },
+    createdAt: o.createdAt,
+    updatedAt: o.updatedAt,
+    estimatedDeliveryTime: o.estimatedDeliveryTime,
+  };
+}
 const mockOrders: Order[] = [
   {
     id: 'order-001',
@@ -34,7 +66,7 @@ const mockOrders: Order[] = [
     discount: 0,
     total: 438,
     paymentStatus: 'paid',
-    paymentMethod: 'razorpay',
+    paymentMethod: 'esewa',
     orderStatus: 'delivery',
     deliveryInfo: {
       name: 'John Customer',
@@ -67,7 +99,7 @@ const mockOrders: Order[] = [
     discount: 0,
     total: 319,
     paymentStatus: 'pending',
-    paymentMethod: 'razorpay',
+    paymentMethod: 'esewa',
     orderStatus: 'received',
     deliveryInfo: {
       name: 'John Customer',
@@ -86,7 +118,13 @@ export const orderService = {
       await delay(MOCK_DELAY);
       return mockOrders;
     }
-    return apiClient.get<Order[]>('/orders');
+    const res = await apiClient.get<{ success: boolean; data: any[]; pagination: any }>('/orders/my');
+    return (res.data || []).map(mapOrder);
+  },
+
+  async getOrderAdmin(id: string): Promise<Order> {
+    const res = await apiClient.get<{ success: boolean; data: { order: any } }>(`/admin/orders/${id}`);
+    return mapOrder(res.data.order ?? res.data);
   },
 
   async getOrder(id: string): Promise<Order> {
@@ -96,7 +134,8 @@ export const orderService = {
       if (!order) throw new Error('Order not found');
       return order;
     }
-    return apiClient.get<Order>(`/orders/${id}`);
+    const res = await apiClient.get<{ success: boolean; data: { order: any } }>(`/orders/${id}`);
+    return mapOrder(res.data.order ?? res.data);
   },
 
   async createOrder(data: CreateOrderRequest): Promise<Order> {
@@ -128,7 +167,8 @@ export const orderService = {
       mockOrders.push(order);
       return order;
     }
-    return apiClient.post<Order>('/orders', data);
+    const res = await apiClient.post<{ success: boolean; data: { order: any } }>('/orders', data);
+    return mapOrder(res.data.order ?? res.data);
   },
 
   async updateOrderStatus(update: OrderStatusUpdate): Promise<Order> {
@@ -140,9 +180,10 @@ export const orderService = {
       order.updatedAt = new Date().toISOString();
       return order;
     }
-    return apiClient.patch<Order>(`/orders/${update.orderId}/status`, {
+    const res = await apiClient.patch<{ success: boolean; data: { order: Order } }>(`/admin/orders/${update.orderId}/status`, {
       status: update.status,
     });
+    return res.data.order ?? res.data;
   },
 
   async getAllOrdersAdmin(params?: {
@@ -174,7 +215,8 @@ export const orderService = {
         totalPages: Math.ceil(filtered.length / limit),
       };
     }
-    return apiClient.get('/orders/admin/all', { params });
+    const res = await apiClient.get<{ success: boolean; data: any[]; pagination: any }>('/admin/orders', { params });
+    return { data: (res.data || []).map(mapOrder), total: res.pagination?.total ?? (res.data || []).length, page: res.pagination?.page ?? 1, totalPages: res.pagination?.totalPages ?? 1 };
   },
 
   getOrderTrackingSteps(order: Order): OrderTrackingStep[] {

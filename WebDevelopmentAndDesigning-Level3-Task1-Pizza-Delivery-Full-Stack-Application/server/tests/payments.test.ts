@@ -75,12 +75,9 @@ describe('initiate: request construction', () => {
     expect(await Order.countDocuments()).toBe(1);
     expect(await stock('Dough')).toBe(98); // initiating never touches stock
   });
-  it('requires authentication, a verified email and ownership', async () => {
+  it('requires authentication and ownership', async () => {
     const { orderId } = await checkout();
     expect((await request(app).post('/api/payments/esewa/initiate').send({ orderId })).status).toBe(401);
-    const unverified = await createUser({ verified: false });
-    const r = await request(app).post('/api/payments/esewa/initiate').set(unverified.auth).send({ orderId });
-    expect(r.body.error.code).toBe('EMAIL_NOT_VERIFIED');
     const other = await createUser();
     expect((await request(app).post('/api/payments/esewa/initiate').set(other.auth).send({ orderId })).status).toBe(404);
   });

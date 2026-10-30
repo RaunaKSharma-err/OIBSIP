@@ -57,7 +57,23 @@ export const inventoryService = {
         totalPages: Math.ceil(filtered.length / limit),
       };
     }
-    return apiClient.get<PaginatedResponse<InventoryItem>>('/inventory', { params });
+    const res = await apiClient.get<{ success: boolean; data: any[]; pagination: any }>('/admin/inventory', { params });
+    return {
+      data: (res.data || []).map((i: any) => ({
+        id: i.id,
+        name: i.name,
+        category: i.category,
+        unit: i.unit,
+        quantity: i.stock ?? i.quantity,
+        lowStockThreshold: i.lowStockThreshold,
+        lastUpdated: i.lastStockChangeAt || new Date().toISOString(),
+        updatedBy: 'Admin',
+      })),
+      total: res.pagination?.total ?? (res.data || []).length,
+      page: res.pagination?.page ?? params.page ?? 1,
+      limit: res.pagination?.limit ?? params.limit ?? 20,
+      totalPages: res.pagination?.totalPages ?? 1,
+    };
   },
 
   async getItem(id: string): Promise<InventoryItem> {
@@ -67,7 +83,8 @@ export const inventoryService = {
       if (!item) throw new Error('Item not found');
       return item;
     }
-    return apiClient.get<InventoryItem>(`/inventory/${id}`);
+    const res = await apiClient.get<{ success: boolean; data: { item: InventoryItem } }>(`/admin/inventory/${id}`);
+    return res.data.item;
   },
 
   async adjustStock(data: InventoryAdjustmentRequest): Promise<InventoryAdjustmentResponse> {
@@ -80,6 +97,7 @@ export const inventoryService = {
       item.lastUpdated = new Date().toISOString();
       return { item, previousQuantity: prev, newQuantity: item.quantity };
     }
-    return apiClient.post<InventoryAdjustmentResponse>('/inventory/adjust', data);
+    const res = await apiClient.post<{ success: boolean; data: { item: InventoryItem } }>(`/admin/inventory/${data.itemId}/adjustments`, { change: data.adjustment, reason: data.reason || 'manual adjustment' });
+    return { item: res.data.item, previousQuantity: 0, newQuantity: res.data.item.quantity };
   },
 };

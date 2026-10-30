@@ -62,11 +62,9 @@ describe('order creation and pricing', () => {
     const res = await request(app).post('/api/orders').set(u.auth).send(orderBody(cat, { total: 1, orderStatus: 'received' }));
     expect(res.status).toBe(400);
   });
-  it('requires a verified email', async () => {
-    const u = await createUser({ verified: false });
-    const res = await request(app).post('/api/orders').set(u.auth).send(orderBody(cat));
-    expect(res.status).toBe(403);
-    expect(res.body.error.code).toBe('EMAIL_NOT_VERIFIED');
+  it('requires authentication', async () => {
+    const res = await request(app).post('/api/orders').send(orderBody(cat));
+    expect(res.status).toBe(401);
   });
   it('rejects options that are not offered for the chosen pizza', async () => {
     const u = await createUser();

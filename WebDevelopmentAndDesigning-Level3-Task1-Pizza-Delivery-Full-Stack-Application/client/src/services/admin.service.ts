@@ -45,6 +45,19 @@ export const adminService = {
     }
     const res = await apiClient.get<{ success: boolean; data: any }>('/admin/dashboard');
     const d = res.data;
+    let recentOrders: any[] = [];
+    try {
+      const or = await apiClient.get<{ success: boolean; data: any[]; pagination: any }>('/admin/orders', { params: { limit: 5, page: 1 } });
+      recentOrders = (or.data || []).map((o: any) => ({
+        id: o.id,
+        orderNumber: o.orderNumber,
+        customerName: o.customer?.name || 'Customer',
+        total: o.total,
+        orderStatus: o.orderStatus,
+        paymentStatus: o.paymentStatus,
+        createdAt: o.createdAt,
+      }));
+    } catch { recentOrders = []; }
     return {
       stats: {
         totalOrders: d.orders?.total ?? 0,
@@ -61,7 +74,7 @@ export const adminService = {
         { status: 'delivered', count: d.orders?.delivered ?? 0 },
         { status: 'cancelled', count: d.orders?.cancelledPaid ?? 0 },
       ],
-      recentOrders: [],
+      recentOrders,
       lowStockItems: (d.inventory?.lowStockItems || []).map((i: any) => ({
         id: i.id,
         name: i.name,

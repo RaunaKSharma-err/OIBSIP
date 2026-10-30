@@ -16,7 +16,7 @@ import { useCartStore } from '@/lib/cart-store';
 import { useAuthStore } from '@/lib/auth-store';
 import { deliveryInfoSchema, type DeliveryInfoFormData } from '@/lib/validators';
 import { orderService } from '@/services/order.service';
-import { paymentService } from '@/services/payment.service';
+import { initiateEsewaPayment, submitEsewaForm } from '@/features/esewa/api';
 import { config } from '@/lib/config';
 import { formatCurrency } from '@/lib/format';
 import type { DeliveryInfo, PaymentMethod } from '@/types';
@@ -29,9 +29,9 @@ type CheckoutStep = 'details' | 'processing' | 'success' | 'error';
 export function CheckoutPage() {
   const navigate = useNavigate();
   const { items, getSubtotal, clearCart } = useCartStore();
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
   const [step, setStep] = useState<CheckoutStep>('details');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('razorpay');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('esewa');
   const [completedOrderId, setCompletedOrderId] = useState<string>('');
 
   const subtotal = getSubtotal();
@@ -52,62 +52,37 @@ export function CheckoutPage() {
   const onSubmit = async (data: DeliveryInfoFormData) => {
     setStep('processing');
     try {
-      const deliveryInfo: DeliveryInfo = {
-        name: data.name,
-        phone: data.phone,
-        address: data.address,
-        city: data.city,
-        instructions: data.instructions,
-      };
+      let fallbackBaseId = '';
+      if (items.some((i) => !i.baseId)) {
+        const opts = await (await import('@/services/pizza.service')).pizzaService.getCustomizationOptions();
+        fallbackBaseId = opts.bases.find((b) => b.isAvailable)?.id || opts.bases[0]?.id || '';
+      }
 
       const order = await orderService.createOrder({
         items: items.map((item) => ({
           pizzaId: item.pizzaId,
+          baseId: item.baseId || fallbackBaseId,
+          sauceId: item.sauceId,
+          cheeseId: item.cheeseId,
+          toppingIds: item.toppingIds || [],
           quantity: item.quantity,
-          customConfig: {
-            baseId: item.baseName || '',
-            sauceId: item.sauceName || '',
-            cheeseId: item.cheeseName || '',
-            toppingIds: item.toppings.map((t) => t.id),
-            sizeId: item.sizeName || '',
-          },
         })),
-        deliveryInfo,
-        paymentMethod,
-      });
+        delivery: {
+          fullName: data.name,
+          phone: data.phone,
+          addressLine1: data.address,
+          city: data.city,
+          state: data.city,
+          postalCode: '00000',
+          instructions: data.instructions,
+        },
+      } as any);
 
-      if (paymentMethod === 'razorpay') {
-        const paymentRes = await paymentService.createPayment({
-          orderId: order.id,
-          amount: order.total,
-        });
-
-        let razorpayPaymentId = '';
-        let razorpaySignature = '';
-
-        if (config.useMock) {
-          toast.info('Mock payment mode — simulating successful payment');
-          razorpayPaymentId = `mock_pay_${Date.now()}`;
-          razorpaySignature = 'mock_signature';
-        } else {
-          const result = await paymentService.openCheckout({
-            razorpayOrderId: paymentRes.razorpayOrderId,
-            amount: paymentRes.amount,
-            keyId: paymentRes.keyId,
-            customerName: deliveryInfo.name,
-            customerEmail: user?.email || '',
-            customerPhone: deliveryInfo.phone,
-          });
-          razorpayPaymentId = result.razorpayPaymentId;
-          razorpaySignature = result.razorpaySignature;
-        }
-
-        await paymentService.verifyPayment({
-          razorpayOrderId: paymentRes.razorpayOrderId,
-          razorpayPaymentId,
-          razorpaySignature,
-          orderId: order.id,
-        });
+      if (paymentMethod === 'esewa') {
+        if (!token) throw new Error('Not authenticated');
+        const form = await initiateEsewaPayment(token || localStorage.getItem('auth_token') || '', order.id);
+        submitEsewaForm(form);
+        return;
       }
 
       setCompletedOrderId(order.id);
@@ -117,7 +92,14 @@ export function CheckoutPage() {
     } catch (e) {
       setStep('error');
       const msg = e instanceof Error ? e.message : 'Checkout failed';
-      toast.error(msg);
+      const details = (e as any)?.details;
+      if (details && typeof details === 'object') {
+        const d = Object.values(details).map((v: any) => v?.message || v).join('; ');
+        if (d) toast.error(`${msg}: ${d}`);
+        else toast.error(msg);
+      } else {
+        toast.error(msg);
+      }
     }
   };
 
@@ -224,17 +206,17 @@ export function CheckoutPage() {
               <CardContent className="space-y-3">
                 <button
                   type="button"
-                  onClick={() => setPaymentMethod('razorpay')}
-                  className={`flex w-full items-center justify-between rounded-lg border p-4 transition-colors ${paymentMethod === 'razorpay' ? 'border-primary bg-primary/5' : 'hover:bg-accent'}`}
+                  onClick={() => setPaymentMethod('esewa')}
+                  className={`flex w-full items-center justify-between rounded-lg border p-4 transition-colors ${paymentMethod === 'esewa' ? 'border-primary bg-primary/5' : 'hover:bg-accent'}`}
                 >
                   <div className="flex items-center gap-3">
                     <CreditCard className="h-5 w-5 text-primary" />
                     <div className="text-left">
-                      <span className="block text-sm font-medium">Razorpay (Card / UPI / Net Banking)</span>
-                      <span className="text-xs text-muted-foreground">Pay securely online</span>
+                      <span className="block text-sm font-medium">eSewa (Online Payment)</span>
+                      <span className="text-xs text-muted-foreground">Pay securely via eSewa</span>
                     </div>
                   </div>
-                  {paymentMethod === 'razorpay' && <CheckCircle2 className="h-5 w-5 text-primary" />}
+                  {paymentMethod === 'esewa' && <CheckCircle2 className="h-5 w-5 text-primary" />}
                 </button>
                 <button
                   type="button"
@@ -250,9 +232,9 @@ export function CheckoutPage() {
                   </div>
                   {paymentMethod === 'cod' && <CheckCircle2 className="h-5 w-5 text-primary" />}
                 </button>
-                {config.useMock && paymentMethod === 'razorpay' && (
+                {config.useMock && paymentMethod === 'esewa' && (
                   <p className="rounded-md bg-warning/10 px-3 py-2 text-xs text-warning">
-                    Development mode: Payment will be simulated. No real charge will occur.
+                    Development mode: eSewa test environment will be used.
                   </p>
                 )}
               </CardContent>

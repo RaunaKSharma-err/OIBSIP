@@ -1,4 +1,5 @@
 export type OrderStatus =
+  | 'pending_payment'
   | 'received'
   | 'kitchen'
   | 'delivery'
@@ -11,7 +12,7 @@ export type PaymentStatus =
   | 'failed'
   | 'refunded';
 
-export type PaymentMethod = 'razorpay' | 'cod';
+export type PaymentMethod = 'esewa' | 'cod';
 
 export interface CartItemTopping {
   id: string;
@@ -27,12 +28,16 @@ export interface CartItem {
   basePrice: number;
   sizeName?: string;
   sizePriceMultiplier: number;
+  baseId?: string;
   baseName?: string;
   basePriceAddon: number;
+  sauceId?: string;
   sauceName?: string;
   saucePriceAddon: number;
+  cheeseId?: string;
   cheeseName?: string;
   cheesePriceAddon: number;
+  toppingIds?: string[];
   toppings: CartItemTopping[];
   quantity: number;
   unitPrice: number;
@@ -71,6 +76,7 @@ export interface Order {
   paymentMethod: PaymentMethod;
   orderStatus: OrderStatus;
   deliveryInfo: DeliveryInfo;
+  delivery?: any;
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
   createdAt: string;
@@ -91,6 +97,7 @@ export interface CreateOrderRequest {
     };
   }[];
   deliveryInfo: DeliveryInfo;
+  delivery?: any;
   paymentMethod: PaymentMethod;
   couponCode?: string;
 }
