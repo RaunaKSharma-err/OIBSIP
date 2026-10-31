@@ -544,8 +544,8 @@ The project provides a foundation for a scalable pizza ordering and restaurant m
 **Internship Organization:** Oasis Infobyte  
 **Internship Track:** Web Development & Designing  
 **Project Title:** Pizza Delivery and Inventory Management System  
-**Repository:** [Add GitHub Repository URL]  
-**Live Demo:** [(https://pizzahuboibsip.netlify.app/)]  
+**Repository:** https://github.com/RaunaKSharma-err/OIBSIP/tree/main/WebDevelopmentAndDesigning-Level3-Task1-Pizza-Delivery-Full-Stack-Application 
+**Live Demo:** https://pizzahuboibsip.netlify.app/  
 **Demonstration Video:** [Add Video URL]
 
 ---
