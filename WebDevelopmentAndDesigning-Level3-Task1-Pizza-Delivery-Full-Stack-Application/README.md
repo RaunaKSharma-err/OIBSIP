@@ -545,7 +545,7 @@ The project provides a foundation for a scalable pizza ordering and restaurant m
 **Internship Track:** Web Development & Designing  
 **Project Title:** Pizza Delivery and Inventory Management System  
 **Repository:** [Add GitHub Repository URL]  
-**Live Demo:** [Add Deployment URL, if available]  
+**Live Demo:** [(https://pizzahuboibsip.netlify.app/)]  
 **Demonstration Video:** [Add Video URL]
 
 ---
